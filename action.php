@@ -23,8 +23,6 @@ class action_plugin_docnavigation extends DokuWiki_Action_Plugin {
      */
     public function register(Doku_Event_Handler $controller) {
         $controller->register_hook('RENDERER_CONTENT_POSTPROCESS', 'AFTER', $this, '_addtopnavigation');
-//        // insert bottom navigation before discussion plugin (seq=0)
-//        $controller->register_hook('TPL_CONTENT_DISPLAY', 'BEFORE', $this, '_addbottomnavigation', -1001);
     }
 
     /**
@@ -44,25 +42,6 @@ class action_plugin_docnavigation extends DokuWiki_Action_Plugin {
     }
 
     /**
-     * Add navigationbar to bottom of content
-     *
-     * @param Doku_Event $event
-     * @param            $param
-     */
-    public function _addbottomnavigation(Doku_Event &$event, $param) {
-        global $ACT;
-        if(!in_array($ACT, array('show'))) return;
-
-//        //insert before the discussion plugin
-//        $pos = strrpos ( $event->data , '<div class="comment_wrapper" id="comment_wrapper">');
-//        if($pos) {
-//            $event->data = substr_replace($event->data, $this->getNavbar($linktoToC = true), $pos, 0);
-//        } else {
-            $event->data = $event->data . $this->getNavbar($linktoToC = true);
-//        }
-    }
-
-    /**
      * Return html of navigation elements
      *
      * @param bool $linktoToC add referer to ToC
@@ -71,6 +50,7 @@ class action_plugin_docnavigation extends DokuWiki_Action_Plugin {
     private function getNavbar($linktoToC = true) {
         global $ID;
         global $ACT;
+        $data = array();
         if($ACT == 'preview') {
             // the RENDERER_CONTENT_POSTPROCESS event is triggered just after rendering the instruction,
             // so syntax instance will exists
@@ -78,8 +58,6 @@ class action_plugin_docnavigation extends DokuWiki_Action_Plugin {
             $pagenav = plugin_load('syntax', 'docnavigation_pagenav');
             if($pagenav) {
                 $data = $pagenav->data[$ID];
-            } else {
-                $data = array();
             }
         } else {
             $data = p_get_metadata($ID, 'docnavigation');
@@ -88,8 +66,10 @@ class action_plugin_docnavigation extends DokuWiki_Action_Plugin {
         $out = '';
         if(!empty($data)) {
             /** @var Doku_Renderer_xhtml $Renderer */
-            $Renderer = p_get_renderer('xhtml');
-            if (is_null($Renderer)) return null;
+            static $Renderer = null;
+            if(is_null($Renderer)){
+                $Renderer = p_get_renderer('xhtml');
+            }
 
             if($linktoToC) {
                 $out .= '<div class="clearer"></div>'.DOKU_LF;
