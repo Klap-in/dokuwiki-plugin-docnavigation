@@ -9,8 +9,8 @@
 // $lang['menu'] = 'Your menu entry';
 
 // custom language strings for the plugin
-// $lang['fixme'] = 'FIXME';
-
+$lang['dontlinkback'] = "DocNavigation Plugin: page '%s' don't link back to '%s'.";
+$lang['recursionprevented'] = "DocNavigation Plugin: infinite recursion detected at '%s', '%s' is already linked.";
 
 
 //Setup VIM: ex: et ts=4 :
