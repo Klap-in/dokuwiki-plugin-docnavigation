@@ -89,9 +89,13 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin {
             if(empty($levels[0])) {
                 $levels[0] = 2;
             }
+            $levels[0] = (int)$levels[0];
             if(empty($levels[1])) {
                 $levels[1] = $levels[0];
             }
+            $levels[1] = (int)$levels[1];
+
+
             //order from low to high
             if($levels[0] > $levels[1]) {
                 $level = $levels[1];
@@ -127,6 +131,7 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin {
         global $ACT;
 
         if($mode != 'xhtml') return false;
+        /** @var Doku_Renderer_xhtml $renderer */
 
         $renderer->info['cache'] = false;
 
@@ -194,7 +199,7 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin {
             //check referer
             if(empty($pagedata['previous'][0]) || $pagedata['previous'][0] != $previouspage) {
 
-                // is not first page or not-exist page (so without syntax)?
+                // is not first page or non-existing page (so without syntax)?
                 if($previouspage !== null && page_exists($pageid)) {
                     msg(sprintf($this->getLang('dontlinkback'), $pageid, $previouspage), -1);
                 }
@@ -270,7 +275,7 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin {
      */
     public function getFullPageid($pageid) {
         global $ID;
-        resolve_pageid(getNS($ID), $pageid, $exists); //TODO relative to page
+        resolve_pageid(getNS($ID), $pageid, $exists);
         list($page, /* $hash */) = explode('#', $pageid, 2);
         return $page;
     }
