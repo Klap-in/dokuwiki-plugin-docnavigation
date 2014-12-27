@@ -82,8 +82,10 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin {
         //option: start
         if(isset($options['start'])) {
             $options['start'] = $this->getFullPageid($options['start']);
+            $options['previous'] = $ID; //workaround for Include plugin: gets only correct ID in handler
         } else {
             $options['start'] = $ID;
+            $options['previous'] = null;
         }
 
         //option: includeheadings
@@ -138,14 +140,9 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin {
 
         $renderer->info['cache'] = false;
 
-        if($options['start'] !== $ID) {
-            $previouspage = $ID;
-        } else {
-            $previouspage = null;
-        }
-
         $list = array();
-        $pageid = $options['start'];
+        $pageid       = $options['start'];
+        $previouspage = $options['previous'];
         while($pageid !== null) {
             $item = array();
             $item['id'] = $pageid;
