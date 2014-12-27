@@ -69,6 +69,7 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin {
      * @return  bool|array Return an array with all data you want to use in render, false don't add an instruction
      */
     public function handle($match, $state, $pos, Doku_Handler $handler) {
+        global $ID;
 
         $optstrs = substr($match, 7, -1); // remove "<doctoc"  and ">"
         $optstrs = explode(',', $optstrs);
@@ -81,6 +82,8 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin {
         //option: start
         if(isset($options['start'])) {
             $options['start'] = $this->getFullPageid($options['start']);
+        } else {
+            $options['start'] = $ID;
         }
 
         //option: includeheadings
@@ -135,16 +138,14 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin {
 
         $renderer->info['cache'] = false;
 
-        if(isset($options['start'])) {
-            $start = $options['start'];
+        if($options['start'] !== $ID) {
             $previouspage = $ID;
         } else {
-            $start = $ID;
             $previouspage = null;
         }
 
         $list = array();
-        $pageid = $start;
+        $pageid = $options['start'];
         while($pageid !== null) {
             $item = array();
             $item['id'] = $pageid;
