@@ -74,7 +74,7 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin {
         $optstrs = explode(',', $optstrs);
         $options = array();
         foreach($optstrs as $optstr) {
-            list($key, $value) = explode(':', $optstr, 2);
+            list($key, $value) = explode('=', $optstr, 2);
             $options[trim($key)] = trim($value);
         }
 
