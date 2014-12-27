@@ -77,25 +77,43 @@ class action_plugin_docnavigation extends DokuWiki_Action_Plugin {
 
             $out .= '<div class="docnavbar'.($linktoToC ? ' showtoc' : '').'">'.DOKU_LF.DOKU_TAB.'<div class="leftnav">';
             if($data['previous'][0]) {
-                $out .= '← '.$Renderer->internallink($data['previous'][0], $data['previous'][1], null, true);
+                $title = $this->getTitle($data['previous'], $Renderer);
+                $out .= '← '.$Renderer->internallink($data['previous'][0], $title, null, true);
             }
             $out .= '&nbsp;</div>'.DOKU_LF;
 
             if($linktoToC) {
                 $out .= DOKU_TAB.'<div class="centernav">';
                 if($data['toc'][0]) {
-                    $out .= $Renderer->internallink($data['toc'][0], $data['toc'][1], null, true);
+                    $title = $this->getTitle($data['toc'], $Renderer);
+                    $out .= $Renderer->internallink($data['toc'][0], $title, null, true);
                 }
                 $out .= '&nbsp;</div>'.DOKU_LF;
             }
 
             $out .= DOKU_TAB.'<div class="rightnav">&nbsp;';
             if($data['next'][0]) {
-                $out .= $Renderer->internallink($data['next'][0], $data['next'][1], null, true).' →';
+                $title = $this->getTitle($data['next'], $Renderer);
+                $out .= $Renderer->internallink($data['next'][0], $title, null, true).' →';
             }
             $out .= '</div>'.DOKU_LF.'</div>'.DOKU_LF;
         }
         return $out;
+    }
+
+    /**
+     * Build nice url title, if no title given use original link with original not cleaned id
+     *
+     * @param array $link
+     * @param Doku_Renderer_xhtml $Renderer
+     * @return string
+     */
+    protected function getTitle($link, $Renderer) {
+        if($link[1] === null) {
+            $defaulttitle = $Renderer->_simpleTitle($link[2]);
+            return $Renderer->_getLinkTitle(null, $defaulttitle, $link[0]);
+        }
+        return $link[1];
     }
 }
 

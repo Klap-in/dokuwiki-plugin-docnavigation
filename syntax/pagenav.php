@@ -109,6 +109,8 @@ class syntax_plugin_docnavigation_pagenav extends DokuWiki_Syntax_Plugin {
                     $link[0] = (!getNS($ns) ? ':':'').$ns;
                 }
             }
+            //store original link with special chars and upper cases
+            $link[2] = $link[0];
 
             // resolve and clean up the $id
             resolve_pageid(getNS($ID), $link[0], $exists);
@@ -150,6 +152,10 @@ class syntax_plugin_docnavigation_pagenav extends DokuWiki_Syntax_Plugin {
 
             foreach($data as $url) {
                 if($url) {
+                    if($url[1] === null) {
+                        $defaulttitle = $renderer->_simpleTitle($url[2]);
+                        $url[1] = $renderer->_getLinkTitle(null, $defaulttitle, $url[0]);
+                    }
                     $renderer->internallink($url[0], $url[1]);
                 }
             }
