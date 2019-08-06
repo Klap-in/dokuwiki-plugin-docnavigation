@@ -159,10 +159,16 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin {
             $item['perm'] = auth_quickaclcheck($item['id']);
 
             if($item['perm'] >= AUTH_READ) {
-                $list[$pageid] = $item;
+                $tocitemlevel = 1;
+                if(isset($options['onlyheadings']) == false) {
+                    $list[$pageid] = $item;
+                    $tocitemlevel = 2;
+                }
 
                 if(isset($options['includeheadings'])) {
                     $toc = p_get_metadata($pageid, 'description tableofcontents', METADATA_RENDER_USING_CACHE);
+                    
+                    if(is_array($toc) && isset($options['onlyheadings'])) unset($list[$pageid]);
 
                     if(is_array($toc)) foreach($toc as $tocitem) {
                         if($tocitem['level'] < $options['includeheadings'][0] || $tocitem['level'] > $options['includeheadings'][1]) {
@@ -172,7 +178,7 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin {
                         $item['id'] = $pageid . '#' . $tocitem['hid'];
                         $item['ns'] = getNS($item['id']);
                         $item['type'] = 'heading';
-                        $item['level'] = 2 + $tocitem['level'] - $options['includeheadings'][0];
+                        $item['level'] = $tocitemlevel + $tocitem['level'] - $options['includeheadings'][0];
                         $item['title'] = $tocitem['title'];
 
                         $list[$item['id']] = $item;
