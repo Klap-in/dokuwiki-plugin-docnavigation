@@ -64,6 +64,7 @@ class syntax_plugin_docnavigation_pagenav extends DokuWiki_Syntax_Plugin {
      */
     public function connectTo($mode) {
         $this->Lexer->addSpecialPattern('<-[^\n]*\^[^\n]*\^[^\n]*->', $mode, 'plugin_docnavigation_pagenav');
+        $this->Lexer->addSpecialPattern('<<[^\n]*\^[^\n]*\^[^\n]*>>', $mode, 'plugin_docnavigation_pagenav');
     }
 
     /**
