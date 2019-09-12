@@ -162,7 +162,7 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin {
                 $list[$pageid] = $item;
 
                 if(isset($options['includeheadings'])) {
-                    $toc = p_get_metadata($pageid, 'description tableofcontents', METADATA_RENDER_USING_CACHE);
+                    $toc = p_get_metadata($pageid, 'description tableofcontents', METADATA_RENDER_USING_CACHE | METADATA_RENDER_UNLIMITED);
 
                     if(is_array($toc)) foreach($toc as $tocitem) {
                         if($tocitem['level'] < $options['includeheadings'][0] || $tocitem['level'] > $options['includeheadings'][1]) {
