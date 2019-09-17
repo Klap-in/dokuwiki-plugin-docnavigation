@@ -159,7 +159,13 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin {
             $item['perm'] = auth_quickaclcheck($item['id']);
 
             if($item['perm'] >= AUTH_READ) {
-                $list[$pageid] = $item;
+
+                if(isset($options['hidepagelink']) == false) {
+                    $list[$pageid] = $item;
+                    $tocitemlevel = 2;
+                } else {
+                    $tocitemlevel = 1;
+                }
 
                 if(isset($options['includeheadings'])) {
                     $toc = p_get_metadata($pageid, 'description tableofcontents', METADATA_RENDER_USING_CACHE | METADATA_RENDER_UNLIMITED);
@@ -172,7 +178,7 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin {
                         $item['id'] = $pageid . '#' . $tocitem['hid'];
                         $item['ns'] = getNS($item['id']);
                         $item['type'] = 'heading';
-                        $item['level'] = 2 + $tocitem['level'] - $options['includeheadings'][0];
+                        $item['level'] = $tocitemlevel + $tocitem['level'] - $options['includeheadings'][0];
                         $item['title'] = $tocitem['title'];
 
                         $list[$item['id']] = $item;
