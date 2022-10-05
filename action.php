@@ -63,36 +63,27 @@ class action_plugin_docnavigation extends DokuWiki_Action_Plugin
 
         $out = '';
         if (!empty($data)) {
-            /** @var Doku_Renderer_xhtml $Renderer */
-            static $Renderer = null;
-            if (is_null($Renderer)) {
-                $Renderer = p_get_renderer('xhtml');
-            }
-
             if ($linktoToC) {
                 $out .= '<div class="clearer"></div>';
             }
 
             $out .= '<div class="docnavbar' . ($linktoToC ? ' showtoc' : '') . '"><div class="leftnav">';
             if ($data['previous']['link']) {
-                $title = $this->getTitle($data['previous'], $Renderer);
-                $out .= '← ' . $Renderer->internallink(':' . $data['previous']['link'], $title, null, true);
+                $out .= '← ' . $this->htmlLink($data['previous']);
             }
             $out .= '&nbsp;</div>';
 
             if ($linktoToC) {
                 $out .= '<div class="centernav">';
                 if ($data['toc']['link']) {
-                    $title = $this->getTitle($data['toc'], $Renderer);
-                    $out .= $Renderer->internallink(':' . $data['toc']['link'], $title, null, true);
+                    $out .= $this->htmlLink($data['toc']);
                 }
                 $out .= '&nbsp;</div>';
             }
 
             $out .= '<div class="rightnav">&nbsp;';
             if ($data['next']['link']) {
-                $title = $this->getTitle($data['next'], $Renderer);
-                $out .= $Renderer->internallink(':' . $data['next']['link'], $title, null, true) . ' →';
+                $out .= $this->htmlLink($data['next']) . ' →';
             }
             $out .= '</div></div>';
         }
@@ -102,7 +93,25 @@ class action_plugin_docnavigation extends DokuWiki_Action_Plugin
     /**
      * Build nice url title, if no title given use original link with original not cleaned id
      *
-     * @param array $link with: 'link' => string full page id, 'title' => null|string, 'rawlink' => string original not cleaned id
+     * @param array $link with: 'link' => string full page id, 'title' => null|string, 'rawlink' => string original not cleaned id, 'hash' => string
+     * @return string
+     */
+    protected function htmlLink($link) {
+        /** @var Doku_Renderer_xhtml $Renderer */
+        static $Renderer = null;
+        if (is_null($Renderer)) {
+            $Renderer = p_get_renderer('xhtml');
+        }
+
+        $title = $this->getTitle($link, $Renderer);
+        $id = ':' . $link['link'] . '#' . $link['hash'];
+        return $Renderer->internallink($id, $title, null, true);
+    }
+
+    /**
+     * Build nice url title, if no title given use original link with original not cleaned id
+     *
+     * @param array $link with: 'link' => string full page id, 'title' => null|string, 'rawlink' => string original not cleaned id, 'hash' => string
      * @param Doku_Renderer_xhtml $Renderer
      * @return string
      */

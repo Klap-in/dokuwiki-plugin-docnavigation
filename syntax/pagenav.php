@@ -104,7 +104,7 @@ class syntax_plugin_docnavigation_pagenav extends DokuWiki_Syntax_Plugin
             }
 
             $link = trim($link);
-var_dump($link);
+
             //look for an existing headpage when toc is empty
             if ($index == 1 && empty($link)) {
                 $ns = getNS($ID);
@@ -121,7 +121,7 @@ var_dump($link);
             }
             //store original link with special chars and upper cases
             $rawlink = $link;
-            var_dump($link);
+
             // resolve and clean up the $id
             // Igor and later
             if (class_exists('dokuwiki\File\PageResolver')) {
@@ -132,8 +132,8 @@ var_dump($link);
                 resolve_pageid(getNS($ID), $link, $exists);
             }
             //ignore hash
-            [$link,] = array_pad(explode('#', $link, 2), 2, '');
-            var_dump($link);
+            [$link,$hash] = array_pad(explode('#', $link, 2), 2, '');
+
             //previous or next should not point to itself
             if ($index !== 1 && $link == $ID) {
                 $link = '';
@@ -142,7 +142,8 @@ var_dump($link);
             $links[] = [
                 'link' => $link,
                 'title' => $title,
-                'rawlink' => $rawlink
+                'rawlink' => $rawlink,
+                'hash' => $hash
             ];
         }
 
@@ -162,14 +163,14 @@ var_dump($link);
     /**
      * Handles the actual output creation.
      *
-     * @param string $mode output format being rendered
+     * @param string $format output format being rendered
      * @param Doku_Renderer $renderer the current renderer object
      * @param array $data data created by handler()
      * @return  boolean                 rendered correctly? (however, returned value is not used at the moment)
      */
-    public function render($mode, Doku_Renderer $renderer, $data)
+    public function render($format, Doku_Renderer $renderer, $data)
     {
-        if ($mode == 'metadata') {
+        if ($format == 'metadata') {
             /** @var Doku_Renderer_metadata $renderer */
             $renderer->meta['docnavigation'] = $data;
 
