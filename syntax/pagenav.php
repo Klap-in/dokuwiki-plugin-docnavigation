@@ -6,9 +6,6 @@
  * @author  Gerrit Uitslag <klapinklapin@gmail.com>
  */
 
-// must be run within Dokuwiki
-if(!defined('DOKU_INC')) die();
-
 /**
  * Handles document navigation syntax
  */
@@ -17,9 +14,17 @@ class syntax_plugin_docnavigation_pagenav extends DokuWiki_Syntax_Plugin {
     /**
      * Stores data of navigation per page (for preview)
      *
-     * @var array
+     * @var array with entries:
+     *   'previous' => [
+     *      'link' => string,
+     *      'title'  => null|string,
+     *      'rawlink' => string
+     *   ],
+     *   'toc' => [...],
+     *   'next' => [...]
+     *
      */
-    public $data = array();
+    public $data = [];
 
     /**
      * Syntax Type
@@ -76,60 +81,70 @@ class syntax_plugin_docnavigation_pagenav extends DokuWiki_Syntax_Plugin {
      * @param   int          $state   The lexer state for the match
      * @param   int          $pos     The character position of the matched text
      * @param   Doku_Handler $handler The Doku_Handler object
-     * @return  bool|array Return an array with all data you want to use in render, false don't add an instruction
+     * @return  array Return an array with all data you want to use in render, false don't add an instruction
      */
     public function handle($match, $state, $pos, Doku_Handler $handler) {
         global $conf, $ID;
 
         // links are: 0=previous, 1=toc, 2=next
         $linkstrs = explode("^", substr($match, 2, -2), 3);
-        $links = array();
-        foreach($linkstrs as $index => $link) {
+        $links = [];
+        foreach($linkstrs as $index => $linkstr) {
             // Split title from URL
-            $link = explode('|',$link,2);
-            if ( !isset($link[1]) ) {
-                $link[1] = null;
-            } else if (preg_match('/^\{\{[^\}]+\}\}$/',$link[1]) ) {
+            [$link, $title] = array_pad(explode('|',$linkstr,2),2, null);
+            if (isset($title) && preg_match('/^\{\{[^}]+}}$/', $title)) {
                 // If the title is an image, convert it to an array containing the image details
-                $link[1] = Doku_Handler_Parse_Media($link[1]);
+                $title = Doku_Handler_Parse_Media($title);
             }
 
-            $link[0] = trim($link[0]);
+            $link = trim($link);
 
             //look for an existing headpage when toc is empty
-            if($index == 1 && empty($link[0])) {
+            if($index == 1 && empty($link)) {
                 $ns = getNS($ID);
                 if(page_exists($ns.':'.$conf['start'])) {
                     // start page inside namespace
-                    $link[0] = $ns.':'.$conf['start'];
+                    $link = $ns.':'.$conf['start'];
                 }elseif(page_exists($ns.':'.noNS($ns))) {
                     // page named like the NS inside the NS
-                    $link[0] = $ns.':'.noNS($ns);
+                    $link = $ns.':'.noNS($ns);
                 }elseif(page_exists($ns)) {
                     // page like namespace exists
-                    $link[0] = (!getNS($ns) ? ':':'').$ns;
+                    $link = (!getNS($ns) ? ':':'').$ns;
                 }
             }
             //store original link with special chars and upper cases
-            $link[2] = $link[0];
+            $rawlink = $link;
 
             // resolve and clean up the $id
-            resolve_pageid(getNS($ID), $link[0], $exists);
-            @list($link[0]) = explode('#', $link[0], 2);
+            // Igor and later
+            if (class_exists('dokuwiki\File\PageResolver')) {
+                $resolver = new dokuwiki\File\PageResolver($ID);
+                $link = $resolver->resolveId($link);
+            } else {
+                // Compatibility with older releases
+                resolve_pageid(getNS($ID), $link, $exists);
+            }
+            //ignore hash
+            [$link,] = array_pad(explode('#', $link, 2),2, '');
 
             //previous or next should not point to itself
-            if($index !== 1 && $link[0] == $ID) {
-                $link[0] = '';
+            if($index !== 1 && $link == $ID) {
+                $link = '';
             }
 
-            $links[] = $link;
+            $links[] = [
+                'link' => $link,
+                'title' => $title,
+                'rawlink' => $rawlink
+            ];
         }
 
-        $data = array(
+        $data = [
             'previous' => $links[0],
             'toc'      => $links[1],
             'next'     => $links[2]
-        );
+        ];
 
         // store data for preview
         $this->data[$ID] = $data;
@@ -153,11 +168,11 @@ class syntax_plugin_docnavigation_pagenav extends DokuWiki_Syntax_Plugin {
 
             foreach($data as $url) {
                 if($url) {
-                    if($url[1] === null) {
-                        $defaulttitle = $renderer->_simpleTitle($url[2]);
-                        $url[1] = $renderer->_getLinkTitle(null, $defaulttitle, $url[0]);
+                    if($url['title'] === null) {
+                        $defaulttitle = $renderer->_simpleTitle($url['rawlink']) ;
+                        $url['title']  = $renderer->_getLinkTitle(null, $defaulttitle, $url['link']);
                     }
-                    $renderer->internallink($url[0], $url[1]);
+                    $renderer->internallink($url['link'], $url['title']);
                 }
             }
             return true;
@@ -166,5 +181,3 @@ class syntax_plugin_docnavigation_pagenav extends DokuWiki_Syntax_Plugin {
         return false;
     }
 }
-
-// vim:ts=4:sw=4:et:

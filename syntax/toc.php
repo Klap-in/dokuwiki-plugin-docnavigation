@@ -201,7 +201,7 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin {
             }
 
             //check referer
-            if(empty($pagedata['previous'][0]) || $pagedata['previous'][0] != $previouspage) {
+            if(empty($pagedata['previous']['link']) || $pagedata['previous']['link'] != $previouspage) {
 
                 // is not first page or non-existing page (so without syntax)?
                 if($previouspage !== null && page_exists($pageid)) {
@@ -210,13 +210,13 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin {
             }
 
             $previouspage = $pageid;
-            if(empty($pagedata['next'][0])) {
+            $nextpageid = $pagedata['next']['link'];
+            if(empty($nextpageid)) {
                 $pageid = null;
-            } elseif(isset($list[$pagedata['next'][0]])) {
-                msg(sprintf($this->getLang('recursionprevented'), $pageid, $pagedata['next'][0]), -1);
+                msg(sprintf($this->getLang('recursionprevented'), $pageid, $nextpageid), -1);
                 $pageid = null;
             } else {
-                $pageid = $pagedata['next'][0];
+                $pageid = $nextpageid;
             }
         }
 

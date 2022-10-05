@@ -6,11 +6,6 @@
  * @author  Gerrit Uitslag <klapinklapin@gmail.com>
  */
 
-// must be run within Dokuwiki
-if(!defined('DOKU_INC')) die();
-
-require_once(DOKU_INC.'inc/parser/xhtml.php');
-
 /**
  * Add documentation navigation elements around page
  */
@@ -22,35 +17,34 @@ class action_plugin_docnavigation extends DokuWiki_Action_Plugin {
      * @param Doku_Event_Handler $controller
      */
     public function register(Doku_Event_Handler $controller) {
-        $controller->register_hook('RENDERER_CONTENT_POSTPROCESS', 'AFTER', $this, '_addtopnavigation');
+        $controller->register_hook('RENDERER_CONTENT_POSTPROCESS', 'AFTER', $this, 'addtopnavigation');
     }
 
     /**
      * Add navigation bar to top of content
      *
      * @param Doku_Event $event
-     * @param            $param
      */
-    public function _addtopnavigation(Doku_Event &$event, $param) {
+    public function addtopnavigation(Doku_Event $event) {
         global $ACT;
 
-        if($event->data[0] != 'xhtml' || !in_array($ACT, array('show', 'preview'))) return;
+        if($event->data[0] != 'xhtml' || !in_array($ACT, ['show', 'preview'])) return;
 
-        $event->data[1] = $this->getNavbar($linktoToC = false)
+        $event->data[1] = $this->htmlNavigationbar(false)
                         . $event->data[1]
-                        . $this->getNavbar($linktoToC = true);
+                        . $this->htmlNavigationbar(true);
     }
 
     /**
      * Return html of navigation elements
      *
-     * @param bool $linktoToC add referer to ToC
+     * @param bool $linktoToC if true, add referer to ToC
      * @return string
      */
-    private function getNavbar($linktoToC = true) {
+    private function htmlNavigationbar($linktoToC) {
         global $ID;
         global $ACT;
-        $data = array();
+        $data = [];
         if($ACT == 'preview') {
             // the RENDERER_CONTENT_POSTPROCESS event is triggered just after rendering the instruction,
             // so syntax instance will exists
@@ -72,31 +66,31 @@ class action_plugin_docnavigation extends DokuWiki_Action_Plugin {
             }
 
             if($linktoToC) {
-                $out .= '<div class="clearer"></div>'.DOKU_LF;
+                $out .= '<div class="clearer"></div>';
             }
 
-            $out .= '<div class="docnavbar'.($linktoToC ? ' showtoc' : '').'">'.DOKU_LF.DOKU_TAB.'<div class="leftnav">';
-            if($data['previous'][0]) {
+            $out .= '<div class="docnavbar'.($linktoToC ? ' showtoc' : '').'"><div class="leftnav">';
+            if($data['previous']['link']) {
                 $title = $this->getTitle($data['previous'], $Renderer);
-                $out .= '← '.$Renderer->internallink($data['previous'][0], $title, null, true);
+                $out .= '← '.$Renderer->internallink($data['previous']['link'], $title, null, true);
             }
-            $out .= '&nbsp;</div>'.DOKU_LF;
+            $out .= '&nbsp;</div>';
 
             if($linktoToC) {
-                $out .= DOKU_TAB.'<div class="centernav">';
-                if($data['toc'][0]) {
+                $out .= '<div class="centernav">';
+                if($data['toc']['link']) {
                     $title = $this->getTitle($data['toc'], $Renderer);
-                    $out .= $Renderer->internallink($data['toc'][0], $title, null, true);
+                    $out .= $Renderer->internallink($data['toc']['link'], $title, null, true);
                 }
-                $out .= '&nbsp;</div>'.DOKU_LF;
+                $out .= '&nbsp;</div>';
             }
 
-            $out .= DOKU_TAB.'<div class="rightnav">&nbsp;';
-            if($data['next'][0]) {
+            $out .= '<div class="rightnav">&nbsp;';
+            if($data['next']['link']) {
                 $title = $this->getTitle($data['next'], $Renderer);
-                $out .= $Renderer->internallink($data['next'][0], $title, null, true).' →';
+                $out .= $Renderer->internallink($data['next']['link'], $title, null, true).' →';
             }
-            $out .= '</div>'.DOKU_LF.'</div>'.DOKU_LF;
+            $out .= '</div></div>';
         }
         return $out;
     }
@@ -104,17 +98,15 @@ class action_plugin_docnavigation extends DokuWiki_Action_Plugin {
     /**
      * Build nice url title, if no title given use original link with original not cleaned id
      *
-     * @param array $link
+     * @param array $link with: 'link' => string full page id, 'title' => null|string, 'rawlink' => string original not cleaned id
      * @param Doku_Renderer_xhtml $Renderer
      * @return string
      */
     protected function getTitle($link, $Renderer) {
-        if($link[1] === null) {
-            $defaulttitle = $Renderer->_simpleTitle($link[2]);
-            return $Renderer->_getLinkTitle(null, $defaulttitle, $isImage, $link[0]);
+        if($link['title'] === null) {
+            $defaulttitle = $Renderer->_simpleTitle($link['rawtitle']);
+            return $Renderer->_getLinkTitle(null, $defaulttitle, $isImage, $link['link']);
         }
-        return $link[1];
+        return $link['title'];
     }
 }
-
-// vim:ts=4:sw=4:et:
