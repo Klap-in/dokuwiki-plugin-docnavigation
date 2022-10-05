@@ -76,7 +76,7 @@ class action_plugin_docnavigation extends DokuWiki_Action_Plugin
             $out .= '<div class="docnavbar' . ($linktoToC ? ' showtoc' : '') . '"><div class="leftnav">';
             if ($data['previous']['link']) {
                 $title = $this->getTitle($data['previous'], $Renderer);
-                $out .= '← ' . $Renderer->internallink($data['previous']['link'], $title, null, true);
+                $out .= '← ' . $Renderer->internallink(':' . $data['previous']['link'], $title, null, true);
             }
             $out .= '&nbsp;</div>';
 
@@ -84,7 +84,7 @@ class action_plugin_docnavigation extends DokuWiki_Action_Plugin
                 $out .= '<div class="centernav">';
                 if ($data['toc']['link']) {
                     $title = $this->getTitle($data['toc'], $Renderer);
-                    $out .= $Renderer->internallink($data['toc']['link'], $title, null, true);
+                    $out .= $Renderer->internallink(':' . $data['toc']['link'], $title, null, true);
                 }
                 $out .= '&nbsp;</div>';
             }
@@ -92,7 +92,7 @@ class action_plugin_docnavigation extends DokuWiki_Action_Plugin
             $out .= '<div class="rightnav">&nbsp;';
             if ($data['next']['link']) {
                 $title = $this->getTitle($data['next'], $Renderer);
-                $out .= $Renderer->internallink($data['next']['link'], $title, null, true) . ' →';
+                $out .= $Renderer->internallink(':' . $data['next']['link'], $title, null, true) . ' →';
             }
             $out .= '</div></div>';
         }
