@@ -6,9 +6,6 @@
  * @author  Gerrit Uitslag <klapinklapin@gmail.com>
  */
 
-// must be run within Dokuwiki
-if(!defined('DOKU_INC')) die();
-
 /**
  * Syntax for including a table of content of bundle of pages linked by docnavigation
  */
@@ -66,118 +63,135 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin {
      * @param   int          $state   The lexer state for the match
      * @param   int          $pos     The character position of the matched text
      * @param   Doku_Handler $handler The Doku_Handler object
-     * @return  bool|array Return an array with all data you want to use in render, false don't add an instruction
+     * @return  array Return an array with all data you want to use in render, false don't add an instruction
      */
     public function handle($match, $state, $pos, Doku_Handler $handler) {
         global $ID;
 
         $optstrs = substr($match, 7, -1); // remove "<doctoc"  and ">"
         $optstrs = explode(',', $optstrs);
-        $options = array();
+        $options = [
+            'start' => $ID,
+            'previous' => null, //needed for Include Plugin
+            'includeheadings' => false,
+            'numbers' => false,
+            'useheading' => useHeading('navigation'),
+            'hidepagelink' => false
+        ];
         foreach($optstrs as $optstr) {
-            list($key, $value) = explode('=', $optstr, 2);
-            $options[trim($key)] = trim($value);
-        }
+            list($key, $value) = array_pad(explode('=', $optstr, 2), 2, '');
+            $value = trim($value);
 
-        //option: start
-        if(isset($options['start'])) {
-            $options['start'] = $this->getFullPageid($options['start']);
-            $options['previous'] = $ID; //workaround for Include plugin: gets only correct ID in handler
-        } else {
-            $options['start'] = $ID;
-            $options['previous'] = null;
-        }
+            switch(trim($key)) {
+                case 'start':
+                    $options['start'] = $this->getFullPageid($value);
+                    $options['previous'] = $ID; //workaround for Include plugin: gets only correct ID in handler
+                    break;
+                case 'includeheadings':
+                    [$start, $end] = array_pad(explode('-', $value, 2), 2, '');
+                    $start = (int)$start;
+                    $end = (int)$end;
 
-        //option: includeheadings
-        if(isset($options['includeheadings'])) {
-            $levels = explode('-', $options['includeheadings']);
-            if(empty($levels[0])) {
-                $levels[0] = 2;
+                    if($start < 1) {
+                        $start = 2;
+                    }
+
+                    if($end < 1) {
+                        $end = $start;
+                    }
+
+                    //order from low to high
+                    if($start > $end) {
+                        $level = $end;
+                        $end = $start;
+                        $start = $level;
+                    }
+                    $options['includeheadings'] = [$start, $end];
+                    break;
+                case 'numbers':
+                    $options['numbers'] = !empty($value);
+                    break;
+                case 'useheading':
+                    $options['useheading'] = !empty($value);
+                    break;
+                case 'hidepagelink':
+                    $options['hidepagelink'] = !empty($value);
+                    break;
             }
-            $levels[0] = (int)$levels[0];
-            if(empty($levels[1])) {
-                $levels[1] = $levels[0];
-            }
-            $levels[1] = (int)$levels[1];
-
-
-            //order from low to high
-            if($levels[0] > $levels[1]) {
-                $level = $levels[1];
-                $levels[1] = $levels[0];
-                $levels[0] = $level;
-            }
-            $options['includeheadings'] = array($levels[0], $levels[1]);
         }
-
-        //option: numbers (=use ordered list?)
-        $options['numbers'] = !empty($options['numbers']);
-
-        //option: useheading
-        $useheading = useHeading('navigation');
-        if(isset($options['useheading'])) {
-            $useheading = !empty($options['useheading']);
+        if($options['hidepagelink'] && $options['includeheadings'] === false) {
+            $options['includeheadings'] = [1, 2];
         }
-        $options['useheading'] = $useheading;
-
         return $options;
     }
 
     /**
      * Handles the actual output creation.
      *
-     * @param string        $mode     output format being rendered
+     * @param string        $format     output format being rendered
      * @param Doku_Renderer $renderer the current renderer object
      * @param array         $options  data created by handler()
      * @return  boolean                 rendered correctly? (however, returned value is not used at the moment)
      */
-    public function render($mode, Doku_Renderer $renderer, $options) {
+    public function render($format, Doku_Renderer $renderer, $options) {
         global $ID;
         global $ACT;
 
-        if($mode != 'xhtml') return false;
+        if($format != 'xhtml') return false;
         /** @var Doku_Renderer_xhtml $renderer */
 
-        $renderer->info['cache'] = false;
+        $renderer->nocache();
 
-        $list = array();
+        $list = [];
+        $recursioncheck = []; //needed 'hidepagelink' option
         $pageid       = $options['start'];
         $previouspage = $options['previous'];
         while($pageid !== null) {
-            $item = array();
-            $item['id'] = $pageid;
-            $item['ns'] = getNS($item['id']);
-            $item['type'] = isset($options['includeheadings']) ? 'pagewithheadings' : 'pageonly'; //page or heading
-            $item['level'] = 1;
-            $item['ordered'] = $options['numbers'];
+            $pageitem = [];
+            $pageitem['id'] = $pageid;
+            $pageitem['ns'] = getNS($pageitem['id']);
+            $pageitem['type'] = $options['includeheadings'] === false ? 'pageonly' : 'pagewithheadings'; //page or heading
+            $pageitem['level'] = 1;
+            $pageitem['ordered'] = $options['numbers'];
 
             if($options['useheading']) {
-                $item['title'] = p_get_first_heading($item['id'], METADATA_DONT_RENDER);
+                $pageitem['title'] = p_get_first_heading($pageitem['id'], METADATA_DONT_RENDER);
             } else {
-                $item['title'] = null;
+                $pageitem['title'] = null;
             }
-            $item['perm'] = auth_quickaclcheck($item['id']);
+            $pageitem['perm'] = auth_quickaclcheck($pageitem['id']);
 
-            if($item['perm'] >= AUTH_READ) {
+            if($pageitem['perm'] >= AUTH_READ) {
 
-                if(isset($options['hidepagelink']) == false) {
-                    $list[$pageid] = $item;
-                    $tocitemlevel = 2;
-                } else {
+                if($options['hidepagelink']) {
                     $tocitemlevel = 1;
+                    //recursive check needs a list of added pages
+                    $recursioncheck[$pageid] = true;
+                } else {
+                    //add page to list
+                    $list[$pageid] = $pageitem;
+                    $tocitemlevel = 2;
                 }
 
-                if(isset($options['includeheadings'])) {
+                if(!empty($options['includeheadings'])) {
                     $toc = p_get_metadata($pageid, 'description tableofcontents', METADATA_RENDER_USING_CACHE | METADATA_RENDER_UNLIMITED);
 
+                    $first = true;
                     if(is_array($toc)) foreach($toc as $tocitem) {
                         if($tocitem['level'] < $options['includeheadings'][0] || $tocitem['level'] > $options['includeheadings'][1]) {
                             continue;
                         }
-                        $item = array();
+                        $item = [];
                         $item['id'] = $pageid . '#' . $tocitem['hid'];
                         $item['ns'] = getNS($item['id']);
-                        $item['type'] = 'heading';
+                        if($options['hidepagelink'] && $first) {
+                            //mark only first heading(=title), if no pages are shown
+                            $item['type'] = 'firstheading';
+                            $first = false;
+                        } else {
+                            $item['type'] = 'heading';
+                        }
+
                         $item['level'] = $tocitemlevel + $tocitem['level'] - $options['includeheadings'][0];
                         $item['title'] = $tocitem['title'];
 
@@ -194,7 +208,7 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin {
                 if($pagenav) {
                     $pagedata = $pagenav->data[$pageid];
                 } else {
-                    $pagedata = array();
+                    $pagedata = [];
                 }
             } else {
                 $pagedata = p_get_metadata($pageid, 'docnavigation');
@@ -213,6 +227,7 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin {
             $nextpageid = $pagedata['next']['link'];
             if(empty($nextpageid)) {
                 $pageid = null;
+            } elseif($options['hidepagelink'] ? isset($recursioncheck[$nextpageid]) : isset($list[$nextpageid])) {
                 msg(sprintf($this->getLang('recursionprevented'), $pageid, $nextpageid), -1);
                 $pageid = null;
             } else {
@@ -220,7 +235,7 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin {
             }
         }
 
-        $renderer->doc .= html_buildlist($list, 'pagnavtoc', array($this, 'list_item_navtoc'));
+        $renderer->doc .= html_buildlist($list, 'pagnavtoc', [$this, 'listItemNavtoc']);
 
         return true;
     }
@@ -235,7 +250,7 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin {
      * @param array $item
      * @return string
      */
-    public function list_item_navtoc($item) {
+    public function listItemNavtoc($item) {
         // default is noNSorNS($id), but we want noNS($id) when useheading is off FS#2605
         if($item['title'] === null) {
             $name = noNS($item['id']);
@@ -245,7 +260,7 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin {
 
         $ret = '';
         $link = html_wikilink(':' . $item['id'], $name);
-        if($item['type'] == 'pagewithheadings') {
+        if($item['type'] == 'pagewithheadings' || $item['type'] == 'firstheading') {
             $ret .= '<strong>';
             $ret .= $link;
             $ret .= '</strong>';
@@ -279,11 +294,16 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin {
      */
     public function getFullPageid($pageid) {
         global $ID;
-        resolve_pageid(getNS($ID), $pageid, $exists);
-        list($page, /* $hash */) = explode('#', $pageid, 2);
+        // Igor and later
+        if (class_exists('dokuwiki\File\PageResolver')) {
+            $resolver = new dokuwiki\File\PageResolver($ID);
+            $pageid = $resolver->resolveId($pageid);
+        } else {
+            // Compatibility with older releases
+            resolve_pageid(getNS($ID), $pageid, $exists);
+        }
+        [$page, /* $hash */] = array_pad(explode('#', $pageid, 2), 2, '');
         return $page;
     }
 
 }
-
-// vim:ts=4:sw=4:et:
