@@ -78,7 +78,6 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin
         $optstrs = explode(',', $optstrs);
         $options = [
             'start' => $ID,
-            'previous' => null, //needed for Include Plugin
             'includeheadings' => false,
             'numbers' => false,
             'useheading' => useHeading('navigation'),
@@ -91,7 +90,6 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin
             switch (trim($key)) {
                 case 'start':
                     $options['start'] = $this->getFullPageid($value);
-                    $options['previous'] = $ID; //workaround for Include plugin: gets only correct ID in handler
                     break;
                 case 'includeheadings':
                     [$start, $end] = array_pad(explode('-', $value, 2), 2, '');
@@ -150,9 +148,9 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin
         $renderer->nocache();
 
         $list = [];
-        $recursioncheck = []; //needed 'hidepagelink' option
+        $recursioncheck = []; //needed for 'hidepagelink' option
         $pageid = $options['start'];
-        $previouspage = $options['previous'];
+        $previouspage = null;
         while ($pageid !== null) {
             $pageitem = [];
             $pageitem['id'] = $pageid;
