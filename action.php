@@ -118,7 +118,7 @@ class action_plugin_docnavigation extends DokuWiki_Action_Plugin
     protected function getTitle($link, $Renderer)
     {
         if ($link['title'] === null) {
-            $defaulttitle = $Renderer->_simpleTitle($link['rawtitle']);
+            $defaulttitle = $Renderer->_simpleTitle($link['rawlink']);
             return $Renderer->_getLinkTitle(null, $defaulttitle, $isImage, $link['link']);
         }
         return $link['title'];
