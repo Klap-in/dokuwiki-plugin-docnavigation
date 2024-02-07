@@ -6,10 +6,12 @@
  * @author  Gerrit Uitslag <klapinklapin@gmail.com>
  */
 
+use dokuwiki\Extension\SyntaxPlugin;
+
 /**
  * Handles document navigation syntax
  */
-class syntax_plugin_docnavigation_pagenav extends DokuWiki_Syntax_Plugin
+class syntax_plugin_docnavigation_pagenav extends SyntaxPlugin
 {
 
     /**
@@ -51,7 +53,7 @@ class syntax_plugin_docnavigation_pagenav extends DokuWiki_Syntax_Plugin
      * 'stack'  - Special case. Plugin wraps other paragraphs.
      *
      * @return string
-     * @see Doku_Handler_Block
+     * @see \dokuwiki\Parsing\Handler\Block
      *
      */
     public function getPType()

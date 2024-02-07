@@ -6,18 +6,22 @@
  * @author  Gerrit Uitslag <klapinklapin@gmail.com>
  */
 
+use dokuwiki\Extension\ActionPlugin;
+use dokuwiki\Extension\Event;
+use dokuwiki\Extension\EventHandler;
+
 /**
  * Add documentation navigation elements around page
  */
-class action_plugin_docnavigation extends DokuWiki_Action_Plugin
+class action_plugin_docnavigation extends ActionPlugin
 {
 
     /**
      * Register the events
      *
-     * @param Doku_Event_Handler $controller
+     * @param EventHandler $controller
      */
-    public function register(Doku_Event_Handler $controller)
+    public function register(EventHandler $controller)
     {
         $controller->register_hook('RENDERER_CONTENT_POSTPROCESS', 'AFTER', $this, 'addtopnavigation');
     }
@@ -25,9 +29,9 @@ class action_plugin_docnavigation extends DokuWiki_Action_Plugin
     /**
      * Add navigation bar to top of content
      *
-     * @param Doku_Event $event
+     * @param Event $event
      */
-    public function addtopnavigation(Doku_Event $event)
+    public function addtopnavigation(Event $event)
     {
         global $ACT;
 

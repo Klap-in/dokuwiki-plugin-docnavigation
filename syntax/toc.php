@@ -6,10 +6,12 @@
  * @author  Gerrit Uitslag <klapinklapin@gmail.com>
  */
 
+use dokuwiki\Extension\SyntaxPlugin;
+
 /**
  * Syntax for including a table of content of bundle of pages linked by docnavigation
  */
-class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin
+class syntax_plugin_docnavigation_toc extends SyntaxPlugin
 {
 
     /**
@@ -275,23 +277,6 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin
             $ret .= $link;
         }
         return $ret;
-    }
-
-    /**
-     * Callback for html_buildlist
-     *
-     * @param array $item
-     * @return string html
-     */
-    function html_list_toc($item)
-    {
-        if (isset($item['hid'])) {
-            $link = '#' . $item['hid'];
-        } else {
-            $link = $item['link'];
-        }
-
-        return '<a href="' . $link . '">' . hsc($item['title']) . '</a>';
     }
 
     /**
