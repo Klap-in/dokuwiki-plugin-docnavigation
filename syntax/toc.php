@@ -217,6 +217,7 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin
                 }
             } else {
                 $pagedata = p_get_metadata($pageid, 'docnavigation');
+                //can be null if <doctoc> on page without navigation.
             }
 
             //check referer
@@ -229,14 +230,16 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin
             }
 
             $previouspage = $pageid;
-            $nextpageid = $pagedata['next']['link'];
-            if (empty($nextpageid)) {
+            if (empty($pagedata['next']['link'])) {
                 $pageid = null;
-            } elseif ($options['hidepagelink'] ? isset($recursioncheck[$nextpageid]) : isset($list[$nextpageid])) {
-                msg(sprintf($this->getLang('recursionprevented'), $pageid, $nextpageid), -1);
-                $pageid = null;
-            } else {
-                $pageid = $nextpageid;
+            } else{
+                $nextpageid = $pagedata['next']['link'];
+                if ($options['hidepagelink'] ? isset($recursioncheck[$nextpageid]) : isset($list[$nextpageid])) {
+                    msg(sprintf($this->getLang('recursionprevented'), $pageid, $nextpageid), -1);
+                    $pageid = null;
+                } else {
+                    $pageid = $nextpageid;
+                }
             }
         }
 
