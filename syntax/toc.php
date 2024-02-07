@@ -205,19 +205,17 @@ class syntax_plugin_docnavigation_toc extends DokuWiki_Syntax_Plugin
                 }
             }
 
+            $pagedata = null;
             if ($ACT == 'preview' && $pageid === $ID) {
                 // the RENDERER_CONTENT_POSTPROCESS event is triggered just after rendering the instruction,
                 // so syntax instance will exists
-                /** @var syntax_plugin_docnavigation_pagenav $pagenav */
                 $pagenav = plugin_load('syntax', 'docnavigation_pagenav');
-                if ($pagenav) {
-                    $pagedata = $pagenav->data[$pageid];
-                } else {
-                    $pagedata = [];
+                if ($pagenav instanceof syntax_plugin_docnavigation_pagenav) {
+                    $pagedata = $pagenav->getPageData($pageid);
                 }
             } else {
+                //return null if no metadata
                 $pagedata = p_get_metadata($pageid, 'docnavigation');
-                //can be null if <doctoc> on page without navigation.
             }
 
             //check referer

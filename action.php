@@ -48,14 +48,14 @@ class action_plugin_docnavigation extends DokuWiki_Action_Plugin
     {
         global $ID;
         global $ACT;
-        $data = [];
+        $data = null;
         if ($ACT == 'preview') {
             // the RENDERER_CONTENT_POSTPROCESS event is triggered just after rendering the instruction,
             // so syntax instance will exists
             /** @var syntax_plugin_docnavigation_pagenav $pagenav */
             $pagenav = plugin_load('syntax', 'docnavigation_pagenav');
-            if ($pagenav) {
-                $data = $pagenav->data[$ID];
+            if ($pagenav instanceof syntax_plugin_docnavigation_pagenav) {
+                $data = $pagenav->getPageData($ID);
             }
         } else {
             $data = p_get_metadata($ID, 'docnavigation');

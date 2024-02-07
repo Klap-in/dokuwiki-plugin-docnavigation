@@ -16,16 +16,17 @@ class syntax_plugin_docnavigation_pagenav extends DokuWiki_Syntax_Plugin
      * Stores data of navigation per page (for preview)
      *
      * @var array with entries:
-     *   'previous' => [
-     *      'link' => string,
-     *      'title'  => null|string,
-     *      'rawlink' => string
-     *   ],
-     *   'toc' => [...],
-     *   'next' => [...]
-     *
+     *   '<pageid>' => [
+     *      'previous' => [
+     *          'link' => string,
+     *          'title'  => null|string,
+     *          'rawlink' => string
+     *      ],
+     *      'toc' => [...],
+     *      'next' => [...]
+     *   ]
      */
-    public $data = [];
+    public array $data = [];
 
     /**
      * Syntax Type
@@ -187,5 +188,16 @@ class syntax_plugin_docnavigation_pagenav extends DokuWiki_Syntax_Plugin
         }
 
         return false;
+    }
+
+    /**
+     * Get data for a pageid
+     *
+     * @param string $pageId
+     * @return array|null
+     */
+    public function getPageData(string $pageId): ?array
+    {
+        return $this->data[$pageId] ?? null;
     }
 }
